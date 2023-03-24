@@ -16,6 +16,8 @@ public class Compi1_EXREGAN {
      */
     public static void main(String[] args) {
         // TODO code application logic here
+        Vista ven = new Vista();
+        ven.setVisible(true);
     }
     
 }

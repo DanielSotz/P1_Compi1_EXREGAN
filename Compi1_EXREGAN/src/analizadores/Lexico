@@ -1,1 +1,69 @@
+package analizadores;
+import java_cup.runtime.Symbol;
 
+%%
+%class Lexico
+%public
+%line
+%char
+%cup
+%unicode
+%ignorecase
+
+%init{
+	yyline =1;
+	yychar =1;
+%init}
+
+BLANCO = [ \r\t]+
+D= [0-9]+
+DD=[0-9]+("."[  |0-9]+)?
+COMENTARIO = "//".*
+COMENTMULTI    =   "<!"([^/!>]|[^!>]|[^/!>])*"!>"
+CADENA = [\"]([^\"\n]|(\\\"))*[\"]
+MAY = [A-Z]
+MIN = [a-z]
+COMILLASDOBLES = [\"]
+COMILLA = [\']
+FINSECCION = "%%"
+IDENTIFICADOR = [A-Za-z]["_"0-9A-Za-z]*
+CESPECIAL= [\32-\125]
+
+%%
+
+"CONJU" {return new Symbol(sym.RCONJU,yyline,yychar,yytext());}
+
+{BLANCO} {}
+{COMENTMULTI} {System.out.println("Este es un coment "+yytext()+", en la linea: "+yyline+", en la columna: "+yychar);}
+{COMENTARIO} {}
+";" {return new Symbol(sym.PTCOMA,yyline,yychar, yytext());}
+{CADENA} {return new Symbol(sym.CADENA,yyline,yychar, yytext());}
+\. {return new Symbol(sym.CONCATENACION,yyline,yychar, yytext());}
+"{" {return new Symbol(sym.LLABRE,yyline,yychar, yytext());}
+"}" {return new Symbol(sym.LLCIERRA,yyline,yychar, yytext());}
+{FINSECCION} {return new Symbol(sym.FINSECCION,yyline,yychar, yytext());}
+{COMILLA} {return new Symbol(sym.COMILLA,yyline,yychar, yytext());}
+":" {return new Symbol(sym.DOSPUNTOS,yyline,yychar, yytext());}
+"-" {return new Symbol(sym.GUION,yyline,yychar, yytext());}
+">" {return new Symbol(sym.MAYORQ,yyline,yychar, yytext());}
+"," {return new Symbol(sym.COMA,yyline,yychar, yytext());}
+"~" {return new Symbol(sym.RANGO,yyline,yychar, yytext());}
+"|" {return new Symbol(sym.DISYUNCION,yyline,yychar, yytext());}
+"*" {return new Symbol(sym.CEROMAS,yyline,yychar, yytext());}
+"+" {return new Symbol(sym.UNOMAS,yyline,yychar, yytext());}
+"?" {return new Symbol(sym.CEROUNO,yyline,yychar, yytext());}
+"\n"|"\'"|"\"" {return new Symbol(sym.ESP,yyline,yychar, yytext());}
+\n {yychar=1;}
+{COMILLASDOBLES} {return new Symbol(sym.COMILLASDOBLES,yyline,yychar, yytext());}
+{MAY}|{MIN}|{D} {return new Symbol(sym.ALFABETO,yyline,yychar, yytext());}
+{D} {return new Symbol(sym.DE,yyline,yychar, yytext());}
+{DD} {return new Symbol(sym.PTCOMA,yyline,yychar, yytext());}
+{IDENTIFICADOR} {return new Symbol(sym.PTCOMA,yyline,yychar, yytext());}
+{CESPECIAL} {return new Symbol(sym.PTCOMA,yyline,yychar, yytext());}
+
+. {
+    System.out.println("Este es un error lexico: "+yytext()+
+    ", en la linea: "+yyline+", en la columna: "+yychar);
+    Interfaz.interfaz.errores.add(new MyError(yyline,yychar,yytext(),"Este es un error lexico: "+yytext()+
+    ", en la linea: "+yyline+", en la columna: "+yychar));
+}
