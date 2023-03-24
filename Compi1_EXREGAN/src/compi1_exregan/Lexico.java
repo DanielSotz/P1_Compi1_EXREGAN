@@ -499,7 +499,7 @@ public class Lexico {
                         //System.out.println("error lexico (" + lexema + ")" );
 //                        Errores err = new Errores("error lexico (" + lexema + ")" );
 //                        Practica1_comp1.list_err.add(err);
-                        list_err.add("error lexico (" + lexema + ")");
+                        list_err.add("error lexico:" + lexema +" linea:"+fila+" columna:"+ columna);
       
                         //addError(lexema, "Carácter Desconocido", fila, columna - lexema.Length);
                         estado = 0;

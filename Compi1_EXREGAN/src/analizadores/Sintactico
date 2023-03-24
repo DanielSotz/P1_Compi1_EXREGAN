@@ -1,0 +1,581 @@
+package analizadores; 
+import java_cup.runtime.*;
+
+parser code 
+{:
+    /**
+     * Método al que se llama automáticamente ante algún error sintactico.
+     **/ 
+    public void syntax_error(Symbol s){ 
+        System.out.println("Error Sintáctico en la Línea " + (s.left) +
+        " Columna "+s.right+ ". No se esperaba este componente: " +s.value+"."); 
+    } 
+
+    /**
+     * Método al que se llama automáticamente ante algún error sintáctico 
+     * en el que ya no es posible una recuperación de errores.
+     **/ 
+    public void unrecovered_syntax_error(Symbol s) throws java.lang.Exception{ 
+        System.out.println("Error síntactico irrecuperable en la Línea " + 
+        (s.left)+ " Columna "+s.right+". Componente " + s.value + 
+        " no reconocido."); 
+    }
+
+    public LinkedList<Nodo> AST;
+    Arbol lista = new Arbol();
+    public LinkedList<Nodo> getAST(){
+        retur AST;
+    }
+    int i=0;
+
+  
+:} 
+
+terminal String LLABRE,LLCIERRA, RCONJUN, FINSECCION, DOSPUNTOS, IDENTIFICADOR, GUION, MAYORQ, COMA, ALFABETO, COMILLASDOBLES, CESPECIAL;
+terminal String RANGO, PTCOMA, CONCATENACION, DISYUNCION, CEROMAS, CEROUNA, UNOMAS, CADENA, ENTERO, DECIMAL, COMILLA, ESP;
+
+non terminal inicio;
+non terminal instrucciones;
+non terminal SecConjuntos;
+non terminal FinalSeccion;
+non terminal SecDefER;
+non terminal SecLexemas;
+non terminal conjunto;
+non terminal Nodo er;
+non terminal lexema;
+non terminal notacionConj;
+non terminal ERpolaca;
+non terminal ERPolMul;
+
+start with inicio; 
+
+inicio::=
+	LLABRE instrucciones:a LLCIERRA {:
+    //se guarda el AST, que es la lista principal de instrucciones en la variable
+    //AST que se definió dentro del parser
+    parser.AST=a;
+:}
+	| error
+;
+
+instrucciones ::=
+	SecDefER:a FinalSeccion SecLexemas:b {:RESULT=a; RESULT.add(b);:}
+;
+
+FinalSeccion ::=
+	FINSECCION FinalSeccion
+	| FINSECCION
+;
+
+SecDefER ::= conjunto:a SecDefER:b {:RESULT=a; RESULT.add(b);:}
+            | er:a secDefER:b {:RESULT=a; RESULT.add(b);:}
+            | conjunto:a {:RESULT=a; :}
+            | er
+            | error SecDefER:a {:RESULT=a;:}
+            | error
+;
+
+SecLexemas::= lexema SecLexemas
+	        |lexema
+	        |error SecLexemas
+		|error
+;
+
+lexema ::= IDENTIFICADOR:a DOSPUNTOS CADENA:b PUNTOYCOMA{:RESULT=a; RESULT.add(b);:}
+;
+
+conjunto ::= RESERVADA DOSPUNTOS IDENTIFICADOR:a GUION MAYORQ notacionConj:b PTYCOMA {:RESULT=a; RESULT.add(b);:}
+;
+
+notacionConj ::= ALFABETO COMA notacionConj
+                |ALFABETO RANGO ALFABETO
+		|ALFABETO
+		|CESPECIAL COMA notacionConj
+		|CESPECIAL RANGO CESPECIAL
+		|CESPECIAL
+;
+
+er ::= IDENTIFICADOR GUION MAYORQ ERpolaca:a PUNTOYCOMA
+;
+
+ERpolaca ::= CEROMAS:a LLAVEIZQ IDENTIFICADOR:b LLAVEDER
+		|CEROMAS:a ESP:b {Nodo padre = new Nodo();
+                    padre.valor=a;
+                    i++;
+                    padre.idHoja=i;
+                    padre.Anulabre="A";
+                }
+		|CEROMAS:a CADENA:b {Nodo padre = new Nodo();
+                    padre.valor=a;
+                    i++;
+                    padre.idHoja=i;
+                    padre.Anulabre="A";
+                }
+		|CEROMAS:a ERPolMul:b {Nodo padre = new Nodo();
+                    padre.valor=a;
+                    i++;
+                    padre.idHoja=i;
+                    padre.Anulabre="A";
+                }
+		|UNOMAS:a LLAVEIZQ IDENTIFICADOR:b LLAVEDER {Nodo padre = new Nodo();
+                    padre.valor=a;
+                    i++;
+                    padre.idHoja=i;
+                    padre.Anulabre="N";
+                }
+		|UNOMAS:a ESP:b {Nodo padre = new Nodo();
+                    padre.valor=a;
+                    i++;
+                    padre.idHoja=i;
+                    padre.Anulabre="N";
+                }
+		|UNOMAS:a CADENA:b {Nodo padre = new Nodo();
+                    padre.valor=a;
+                    i++;
+                    padre.idHoja=i;
+                    padre.Anulabre="N";
+                }
+		|UNOMAS:a ERPolMul:b {Nodo padre = new Nodo();
+                    padre.valor=a;
+                    i++;
+                    padre.idHoja=i;
+                    padre.Anulabre="N";
+                }
+		|CEROUNO:a LLAVEIZQ IDENTIFICADOR:b LLAVEDER {Nodo padre = new Nodo();
+                    padre.valor=a;
+                    i++;
+                    padre.idHoja=i;
+                    padre.Anulabre="A";
+                }
+		|CEROUNO:a ESP:b {Nodo padre = new Nodo();
+                    padre.valor=a;
+                    i++;
+                    padre.idHoja=i;
+                    padre.Anulabre="A";
+                }
+		|CEROUNO:a CADENA:b {Nodo padre = new Nodo();
+                    padre.valor=a;
+                    i++;
+                    padre.idHoja=i;
+                    padre.Anulabre="A";
+                }
+		|CEROUNO:a ERPolMul:b {Nodo padre = new Nodo();
+                    padre.valor=a;
+                    i++;
+                    padre.idHoja=i;
+                    padre.Anulabre="A";
+                }
+		|CONCATENACION:a CADENA:b ERpolaca:c {
+                    if(b.Anulable=="A" && c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|CONCATENACION:a ERpolaca:b CADENA:c {
+                    if(b.Anulable=="A" && c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|CONCATENACION:a LLAVEIZQ IDENTIFICADOR:b LLAVEDER CADENA:c {
+                    if(b.Anulable=="A" && c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|CONCATENACION:a CADENA:b LLAVEIZQ IDENTIFICADOR:c LLAVEDER {
+                    if(b.Anulable=="A" && c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|CONCATENACION:a CADENA:b CADENA:c {
+                    if(b.Anulable=="A" && c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|CONCATENACION:a ESP:b CADENA:c {
+                    if(b.Anulable=="A" && c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|CONCATENACION:a CADENA:b ESP:c {
+                    if(b.Anulable=="A" && c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|CONCATENACION:a ERpolaca:b ERpolaca:b {
+                    if(b.Anulable=="A" && c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|CONCATENACION:a LLAVEIZQ IDENTIFICADOR:b LLAVEDER ERpolaca:c {
+                    if(b.Anulable=="A" && c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|CONCATENACION:a ERpolaca:b LLAVEIZQ IDENTIFICADOR:c LLAVEDER {
+                    if(b.Anulable=="A" && c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|CONCATENACION:a LLAVEIZQ IDENTIFICADOR:b LLAVEDER LLAVEIZQ IDENTIFICADOR:c LLAVEDER {
+                    if(b.Anulable=="A" && c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|CONCATENACION:a ESP:b ERpolaca:c {
+                    if(b.Anulable=="A" && c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|CONCATENACION:a LLAVEIZQ IDENTIFICADOR:b LLAVEDER ESP:c {
+                    if(b.Anulable=="A" && c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|CONCATENACION:a ESP:a LLAVEIZQ IDENTIFICADOR:c LLAVEDER {
+                    if(b.Anulable=="A" && c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|CONCATENACION:a ERpolaca:b ESP:c {
+                    if(b.Anulable=="A" && c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|CONCATENACION:a ESP:b ERpolaca:c {
+                    if(b.Anulable=="A" && c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|CONCATENACION:a ESP:b ESP:c {
+                    if(b.Anulable=="A" && c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|DISYUNCION:a CADENA:b ERpolaca:c {
+                    if(b.Anulable=="A" || c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|DISYUNCION:a ERpolaca:b CADENA:c {
+                    if(b.Anulable=="A" || c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|DISYUNCION:a LLAVEIZQ IDENTIFICADOR:b LLAVEDER CADENA:c {
+                    if(b.Anulable=="A" || c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|DISYUNCION:a CADENA:b LLAVEIZQ IDENTIFICADOR:c LLAVEDER {
+                    if(b.Anulable=="A" || c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|DISYUNCION:a CADENA:b CADENA:c {
+                    if(b.Anulable=="A" || c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|DISYUNCION:a ESP:b CADENA:c {
+                    if(b.Anulable=="A" || c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|DISYUNCION:a CADENA:b ESP:c {
+                    if(b.Anulable=="A" || c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|DISYUNCION:a ERpolaca:b ERpolaca:c {
+                    if(b.Anulable=="A" || c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|DISYUNCION:a LLAVEIZQ IDENTIFICADOR:b LLAVEDER ERpolaca:c {
+                    if(b.Anulable=="A" || c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|DISYUNCION:a ERpolaca:b LLAVEIZQ IDENTIFICADOR:c LLAVEDER {
+                    if(b.Anulable=="A" || c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|DISYUNCION:a LLAVEIZQ IDENTIFICADOR:b LLAVEDER LLAVEIZQ IDENTIFICADOR:c LLAVEDER {
+                    if(b.Anulable=="A" || c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|DISYUNCION:a ESP:b ERpolaca:c {
+                    if(b.Anulable=="A" || c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|DISYUNCION:a LLAVEIZQ IDENTIFICADOR:b LLAVEDER ESP:c {
+                    if(b.Anulable=="A" || c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|DISYUNCION:a ESP:b LLAVEIZQ IDENTIFICADOR:c LLAVEDER {
+                    if(b.Anulable=="A" || c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|DISYUNCION:a ERpolaca:b ESP:c{
+                    if(b.Anulable=="A" || c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|DISYUNCION:a ESP:b ERpolaca:c {
+                    if(b.Anulable=="A" || c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|DISYUNCION:a ESP:b ESP:c {
+                    if(b.Anulable=="A" || c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+;
+
+
+ERPolMul ::= CONCATENACION:a CADENA:b ERpolaca:c {
+                    if(b.Anulable=="A" && c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|CONCATENACION:a ERpolaca:b CADENA:c {
+                    if(b.Anulable=="A" && c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|CONCATENACION:a LLAVEIZQ IDENTIFICADOR:b LLAVEDER CADENA:c {
+                    if(b.Anulable=="A" && c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|CONCATENACION:a CADENA:b LLAVEIZQ IDENTIFICADOR:c LLAVEDER {
+                    if(b.Anulable=="A" && c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|CONCATENACION:a CADENA:b CADENA:c {
+                    if(b.Anulable=="A" && c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|CONCATENACION:a ESP:b CADENA:c {
+                    if(b.Anulable=="A" && c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|CONCATENACION:a CADENA:b ESP:c {
+                    if(b.Anulable=="A" && c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|CONCATENACION:a ERpolaca:b ERpolaca:b {
+                    if(b.Anulable=="A" && c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|CONCATENACION:a LLAVEIZQ IDENTIFICADOR:b LLAVEDER ERpolaca:c {
+                    if(b.Anulable=="A" && c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|CONCATENACION:a ERpolaca:b LLAVEIZQ IDENTIFICADOR:c LLAVEDER {
+                    if(b.Anulable=="A" && c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|CONCATENACION:a LLAVEIZQ IDENTIFICADOR:b LLAVEDER LLAVEIZQ IDENTIFICADOR:c LLAVEDER {
+                    if(b.Anulable=="A" && c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|CONCATENACION:a ESP:b ERpolaca:c {
+                    if(b.Anulable=="A" && c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|CONCATENACION:a LLAVEIZQ IDENTIFICADOR:b LLAVEDER ESP:c {
+                    if(b.Anulable=="A" && c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|CONCATENACION:a ESP:a LLAVEIZQ IDENTIFICADOR:c LLAVEDER {
+                    if(b.Anulable=="A" && c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|CONCATENACION:a ERpolaca:b ESP:c {
+                    if(b.Anulable=="A" && c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|CONCATENACION:a ESP:b ERpolaca:c {
+                    if(b.Anulable=="A" && c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|CONCATENACION:a ESP:b ESP:c {
+                    if(b.Anulable=="A" && c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|DISYUNCION:a CADENA:b ERpolaca:c {
+                    if(b.Anulable=="A" || c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|DISYUNCION:a ERpolaca:b CADENA:c {
+                    if(b.Anulable=="A" || c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|DISYUNCION:a LLAVEIZQ IDENTIFICADOR:b LLAVEDER CADENA:c {
+                    if(b.Anulable=="A" || c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|DISYUNCION:a CADENA:b LLAVEIZQ IDENTIFICADOR:c LLAVEDER {
+                    if(b.Anulable=="A" || c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|DISYUNCION:a CADENA:b CADENA:c {
+                    if(b.Anulable=="A" || c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|DISYUNCION:a ESP:b CADENA:c {
+                    if(b.Anulable=="A" || c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|DISYUNCION:a CADENA:b ESP:c {
+                    if(b.Anulable=="A" || c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|DISYUNCION:a ERpolaca:b ERpolaca:c {
+                    if(b.Anulable=="A" || c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|DISYUNCION:a LLAVEIZQ IDENTIFICADOR:b LLAVEDER ERpolaca:c {
+                    if(b.Anulable=="A" || c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|DISYUNCION:a ERpolaca:b LLAVEIZQ IDENTIFICADOR:c LLAVEDER {
+                    if(b.Anulable=="A" || c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|DISYUNCION:a LLAVEIZQ IDENTIFICADOR:b LLAVEDER LLAVEIZQ IDENTIFICADOR:c LLAVEDER {
+                    if(b.Anulable=="A" || c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|DISYUNCION:a ESP:b ERpolaca:c {
+                    if(b.Anulable=="A" || c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|DISYUNCION:a LLAVEIZQ IDENTIFICADOR:b LLAVEDER ESP:c {
+                    if(b.Anulable=="A" || c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|DISYUNCION:a ESP:b LLAVEIZQ IDENTIFICADOR:c LLAVEDER {
+                    if(b.Anulable=="A" || c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|DISYUNCION:a ERpolaca:b ESP:c{
+                    if(b.Anulable=="A" || c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|DISYUNCION:a ESP:b ERpolaca:c {
+                    if(b.Anulable=="A" || c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+		|DISYUNCION:a ESP:b ESP:c {
+                    if(b.Anulable=="A" || c.Anulable=="A"){
+                        a.Anulable="A"}
+                    else
+                        {b.Anulable="N"}
+                }
+;
+
+

@@ -1,5 +1,8 @@
 package analizadores;
-import java_cup.runtime.Symbol;
+import java_cup.runtime.*;
+import java.util.LinkedList;
+import java.util.ArrayList;
+import 
 
 %%
 %class Lexico

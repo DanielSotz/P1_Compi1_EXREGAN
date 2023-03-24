@@ -291,7 +291,7 @@ public class Sintactico {
         }
         else {
             //JOptionPane.showMessageDialog(null,"Error Sintactico se esperaba un caracter o Dijito lexema: " + preanalisis.lexema );
-             err_sin.add("Error Sintactico se esperaba un caracter o Dijito lexema: " + preanalisis.lexema );
+             err_sin.add("Error Sintactico se esperaba un caracter o Digito, lexema: " + preanalisis.lexema );
         }
     }
     public void VAL_CON(LinkedList<String> valores) {
