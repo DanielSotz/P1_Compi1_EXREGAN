@@ -5,11 +5,14 @@
  */
 package compi1_exregan;
 
+import java.awt.Desktop;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.FileWriter;
+import java.util.LinkedList;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
@@ -23,6 +26,18 @@ public class Vista extends javax.swing.JFrame {
      * Creates new form Vistra
      */
     
+     ////////////guarda listado de arboles generados
+    LinkedList<ListadoArboles> lis_arbol_expre;
+    
+    /*conjuntos*/
+    LinkedList<Variables> lis_var;
+    
+    /*lista expresiones regulares*/
+    LinkedList<VarExpReg> lis_ex_reg;
+    
+    /*para evaluar las expresiones regulares*/
+    LinkedList<Exp_a_Evaluar> lis_evaluar_expre;
+    
     JFileChooser dialog = new JFileChooser();
     File rutas_ar;
     FileInputStream entrada;
@@ -31,6 +46,7 @@ public class Vista extends javax.swing.JFrame {
     
     public Vista() {
         initComponents();
+        lis_arbol_expre = new LinkedList<>();
     }
 
     /**
@@ -44,6 +60,10 @@ public class Vista extends javax.swing.JFrame {
 
         jScrollPane1 = new javax.swing.JScrollPane();
         jtxtarea1 = new javax.swing.JTextArea();
+        n_analizar = new javax.swing.JButton();
+        b_crear_arbol = new javax.swing.JButton();
+        b_lex = new javax.swing.JButton();
+        jScrollPane2 = new javax.swing.JScrollPane();
         area2 = new javax.swing.JTextArea();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
@@ -59,8 +79,30 @@ public class Vista extends javax.swing.JFrame {
         jtxtarea1.setRows(5);
         jScrollPane1.setViewportView(jtxtarea1);
 
+        n_analizar.setText("Analizar Entrada");
+        n_analizar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                n_analizarActionPerformed(evt);
+            }
+        });
+
+        b_crear_arbol.setText("Crear Graficas");
+        b_crear_arbol.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                b_crear_arbolActionPerformed(evt);
+            }
+        });
+
+        b_lex.setText("Evaluar Lexemas");
+        b_lex.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                b_lexActionPerformed(evt);
+            }
+        });
+
         area2.setColumns(20);
         area2.setRows(5);
+        jScrollPane2.setViewportView(area2);
 
         jMenu1.setText("Archivo");
 
@@ -108,20 +150,35 @@ public class Vista extends javax.swing.JFrame {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(17, 17, 17)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 835, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(area2, javax.swing.GroupLayout.PREFERRED_SIZE, 625, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(170, Short.MAX_VALUE))
+                .addGap(22, 22, 22)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 911, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 599, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(31, 31, 31)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(b_crear_arbol)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(b_lex))
+                            .addComponent(n_analizar, javax.swing.GroupLayout.PREFERRED_SIZE, 222, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                .addContainerGap(94, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(17, 17, 17)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 361, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(47, 47, 47)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 364, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
-                .addComponent(area2, javax.swing.GroupLayout.PREFERRED_SIZE, 131, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(56, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(n_analizar)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(b_crear_arbol)
+                            .addComponent(b_lex)))
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 99, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(63, Short.MAX_VALUE))
         );
 
         pack();
@@ -216,6 +273,279 @@ public class Vista extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_jm_guardarcActionPerformed
 
+    public void imprimir_errLex(){
+        area2.setText("");
+        for (int i = 0; i < err_lex.size(); ++i)
+        { 
+            area2.setText(area2.getText() +err_lex.get(i) + "\n");
+        }
+        
+        for (int i = 0; i < err_sin.size(); ++i)
+        { 
+            area2.setText(area2.getText() +err_sin.get(i) + "\n");
+        }
+    }
+    
+    LinkedList<String> err_lex;
+    LinkedList<String> err_sin;
+    
+    private void n_analizarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_n_analizarActionPerformed
+        String texto = jtxtarea1.getText();
+        //JOptionPane.showMessageDialog(null, texto);
+
+        Lexico analisis_lex =  new Lexico();
+        analisis_lex.Analizador_cadena(texto);
+
+        analisis_lex.ImprimeTokens();
+        /////System.err.println("------------------------" );
+        err_lex = analisis_lex.getErr_lex();
+
+        Sintactico sin = new Sintactico();
+        sin.Parsear(analisis_lex.lis_tokens);
+
+        lis_ex_reg = sin.getLista_ExpRegulares();
+        lis_var = sin.getLista_Conjuntos();
+        lis_evaluar_expre = sin.getLista_Evaluar();
+
+        //       for (int i = 0; i < lis_evaluar_expre.size(); ++i)
+        //        {
+            //            JOptionPane.showMessageDialog(null,lis_evaluar_expre.get(i).identificador + " - "  + lis_evaluar_expre.get(i).cadena_eva);
+            //        }
+
+        err_sin = sin.getList_sin();
+        imprimir_errLex();
+
+        JOptionPane.showMessageDialog(null,"termino el analisis");
+        //       sin.Imprime_var();
+        //
+        //       sin.Imprime_ER();
+
+    }//GEN-LAST:event_n_analizarActionPerformed
+
+    NodeArbol root;
+    private void b_crear_arbolActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_b_crear_arbolActionPerformed
+        // TODO add your handling code here:
+        //Crea_Three_ER();
+        if (err_lex.size() == 0 && err_sin.size() == 0) {
+            Crea_Three_ER();
+        } else{
+            JOptionPane.showMessageDialog(null,"Corriga errores para graficar");
+        }
+    }//GEN-LAST:event_b_crear_arbolActionPerformed
+
+    public int ObtenerIndiceArbol(String exp){
+        
+        for (int i = 0; i < lis_arbol_expre.size(); ++i)
+        {             
+              if (lis_arbol_expre.get(i).name_expresion.equals(exp)) {
+                return i;
+            }
+        }
+        return -99;
+    }
+    
+    LinkedList<String> resul_lis;
+    
+    public void lis_resul(){
+        area2.setText( area2.getText() + "-----------" + "\n");
+        for (int i = 0; i < resul_lis.size(); ++i)
+        { 
+            area2.setText(area2.getText() + resul_lis.get(i) + "\n");
+        }        
+    }    
+    private void b_lexActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_b_lexActionPerformed
+        // TODO add your handling code here:
+
+        //lis_evaluar_expre.get(0).cadena_eva, lis_var);
+        for (int i = 0; i < lis_evaluar_expre.size(); ++i)
+        {
+            //JOptionPane.showMessageDialog(null,"--- " + lis_var.get(i).name_var);
+            JOptionPane.showMessageDialog(null, "Evaliando: " + lis_evaluar_expre.get(i).identificador /*+ " - "
+                +lis_evaluar_expre.get(i).cadena_eva*/);
+            int exist = ObtenerIndiceArbol(lis_evaluar_expre.get(i).identificador);
+
+            if (exist == -99) {
+                area2.setText("No existe expresion Regular para "  + lis_evaluar_expre.get(i).identificador);
+            } else
+            {
+                Arbol tree;
+                tree = lis_arbol_expre.get(exist).arbol;
+
+                tree.EvaluandoLexema_final(lis_evaluar_expre.get(i).cadena_eva, lis_var);
+                resul_lis = tree.getResul_ex();
+                lis_resul();
+            }
+
+        }
+    }//GEN-LAST:event_b_lexActionPerformed
+
+    public void lis_ar(){
+        area2.setText("");
+        for (int i = 0; i < lis_arbol_expre.size(); ++i)
+        { 
+            area2.setText(area2.getText() + lis_arbol_expre.get(i).name_expresion + "\n");
+        }
+        
+    }
+    
+    public void Crea_Three_ER(){
+        /*probando armando el arbol*/
+        LinkedList<ListadoArboles> lis_arnew = new LinkedList<>();
+        lis_arbol_expre = lis_arnew;
+        for (int i = 0; i < lis_ex_reg.size(); ++i)
+        { 
+            JOptionPane.showMessageDialog(null,  lis_ex_reg.get(i).name_exreg /*+ " - "
+                    +lis_ex_reg.get(i).prefijo*/);
+            ///
+            LinkedList<ER_unitario> pref_er = new LinkedList<>();
+            pref_er = lis_ex_reg.get(i).prefijo;
+            
+            
+            /////creando arbol
+            Armando_RPN arbol =  new Armando_RPN(pref_er);
+            NodeArbol root_exp;
+            root_exp = arbol.leyendo_expresiones();
+            
+            /////JOptionPane.showMessageDialog(null,"res arbol: " + root);
+
+            
+            ///////////////////inicioa graficas
+            //Arbol tree = new Arbol(root_exp);
+            Arbol tree = new Arbol(root_exp, lis_ex_reg.get(i).name_exreg);
+
+            tree.preOrder();
+            
+            tree.posOrder();
+            tree.Graficando_arbol();
+            //JOptionPane.showMessageDialog(null,"recor _pos ");
+
+            tree.posOrder_sig();
+            tree.graficando_siguientes();
+            
+            ////transiciones
+            //tree.TabTransiciones();
+            tree.Create_TabTransiciones();
+            tree.graficando_Automata();
+            
+            ListadoArboles ar = new ListadoArboles(lis_ex_reg.get(i).name_exreg, tree);
+            lis_arbol_expre.add(ar);
+//            
+//////////           tree.EvaluandoLexema_final(lis_evaluar_expre.get(0).cadena_eva, lis_var);
+//            
+//            ////////////////fin graficas
+        
+        }
+        lis_ar();
+        JOptionPane.showMessageDialog(null, "Termino de graficar");
+        
+    }
+    
+    //////////////////////////////////////inicio graficando arbol
+    public boolean Graficando_arbol(){
+
+        StringBuilder graf  = new StringBuilder();
+        //graf.append("arbol_avl.txt", "w");
+        graf.append("digraph G { \n");
+        graf.append("rankdir=TB;\n");
+        graf.append("graph [nodesep=0.5 ];\n");
+        graf.append("node [shape = record, fillcolor=seashell2];\n");
+        this.VerArbol(graf);
+        graf.append("\n}\n");
+        
+        return this.graf_arbolavl(graf.toString());
+  
+    }   
+    
+    public void VerArbol(StringBuilder graf){ 
+        this.VerArbol(root, graf);
+        //this.VerArbol(this.root, graf);
+    }
+    
+    public void VerArbol(NodeArbol root_ac, StringBuilder graf){ 
+        if (root_ac != null){
+            this.VerArbol(root_ac.left, graf);
+            NodeArbol tempo = root_ac;
+            if (tempo.right != null){               
+                //graf.append("\"nodo"+ root_ac.lexema+"\"");
+                //graf.append(":C1 -> \"nodo"+ tempo.right.lexema + "\"\n");
+                
+                graf.append("\"nodo"+ root_ac.lexema + root_ac.id + "\"");
+                graf.append(":C1 -> \"nodo"+ tempo.right.lexema + tempo.right.id + "\"\n");
+            }             
+            if (tempo.left != null){
+                //graf.append("\"nodo"+ root_ac.lexema+"\"");
+                //graf.append(":C0 -> \"nodo"+ tempo.left.lexema + "\"\n");
+                
+                graf.append("\"nodo"+ root_ac.lexema+root_ac.id +"\"");
+                graf.append(":C0 -> \"nodo"+ tempo.left.lexema +tempo.left.id + "\"\n");
+            }
+            //graf.append("\"nodo"+ root_ac.lexema  +"\" [ label =\"<C0>|");
+            graf.append("\"nodo"+ root_ac.lexema +root_ac.id +"\" [ label =\"<C0>|");
+            
+//            if (root_ac.lexema.equals("|")){
+//                graf.append(" "+ "l" /*+ "\\n"*/);
+//            } else {
+                graf.append( "\\"+root_ac.lexema /*+ "\\n"*/);
+//            }
+            
+            //graf.append("Altura: "+ root_ac.height+ "\\n");
+            
+            //graf.append("FE: "+ root_ac.fe+ "\\n" );
+            
+            //graf.append("Timestamp: "+ formato_fecha.format(root_ac.fecha_creacion) + "\\n" );
+            //graf.append("Propietario: "+ root_ac.user+ "\\n" );
+            //String conte = root_ac.contenido.replace("\"", "\\\"");
+            //conte = conte.replace("{", "\\{");
+            //conte = conte.replace("}", "\\}");
+            
+            //if (conte.length() >= 50 ) {
+            //    conte = conte.substring(0,48) + "...";
+            //}
+            //graf.append("Contenido: " + conte );
+            
+            graf.append("|<C1>\"]; \n");
+
+            this.VerArbol(root_ac.right, graf);
+        }
+    }
+    
+    public boolean graf_arbolavl(String grafica){
+        //File archivo =new File("hash_user.txt");
+        try
+            {
+            File archivo =new File("arbol_avl.txt");
+            FileWriter escribir= new FileWriter(archivo);
+            escribir.write(grafica);
+            escribir.close();
+            }
+
+            catch(Exception e)
+            {
+            JOptionPane.showMessageDialog(null, "Error al escribir","NANI",JOptionPane.ERROR_MESSAGE);
+            return false;
+            }
+        
+        try {
+
+            Runtime rt = Runtime.getRuntime();
+            //rt.exec( cmd );
+            Process p = rt.exec("dot -Tpng arbol_avl.txt -o arbol_avl.jpg");
+            p.waitFor();
+            //rt.exec("hash_user.jpg");
+            
+            Desktop.getDesktop().open(new File("arbol_avl.jpg"));
+
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(null, ex,"NANI",JOptionPane.ERROR_MESSAGE);
+                return false;
+            } finally {}
+        
+        return true;        
+    }
+    
+    //////////////////////////////////fin graficando arbol
+       
     public String AbrirArhivo(File archivo)
     {
         String document = "";
@@ -305,14 +635,18 @@ public class Vista extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextArea area2;
+    private javax.swing.JButton b_crear_arbol;
+    private javax.swing.JButton b_lex;
     private javax.swing.JMenu jMenu1;
     private javax.swing.JMenu jMenu2;
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JMenuItem jm_abrir;
     private javax.swing.JMenuItem jm_guardar;
     private javax.swing.JMenuItem jm_guardarc;
     private javax.swing.JMenuItem jm_nuevo;
     private javax.swing.JTextArea jtxtarea1;
+    private javax.swing.JButton n_analizar;
     // End of variables declaration//GEN-END:variables
 }
